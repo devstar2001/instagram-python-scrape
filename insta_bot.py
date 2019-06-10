@@ -199,10 +199,6 @@ def login_user(browser,
 	 .send_keys(username)
 	 .perform())
 
-	# update server calls for both 'click' and 'send_keys' actions
-	# for _ in range(2):
-	#     update_activity()
-
 	sleep(1)
 
 	#  password
@@ -269,8 +265,6 @@ def bypass_suspicious_login(browser, bypass_with_mobile):
 		 .click()
 		 .perform())
 
-	# update server calls
-	# update_activity()
 
 	except NoSuchElementException:
 		pass
@@ -284,9 +278,6 @@ def bypass_suspicious_login(browser, bypass_with_mobile):
 		 .move_to_element(this_was_me_button)
 		 .click()
 		 .perform())
-
-	# update server calls
-	# update_activity()
 
 	except NoSuchElementException:
 		# no verification needed
@@ -333,8 +324,6 @@ def bypass_suspicious_login(browser, bypass_with_mobile):
 	 .click()
 	 .perform())
 
-	# update server calls
-	# update_activity()
 
 	print('Instagram detected an unusual login attempt')
 	print('A security code was sent to your {}'.format(choice))
@@ -349,10 +338,6 @@ def bypass_suspicious_login(browser, bypass_with_mobile):
 	 .send_keys(security_code)
 	 .perform())
 
-	# update server calls for both 'click' and 'send_keys' actions
-	# for i in range(2):
-	#     update_activity()
-
 	submit_security_code_button = browser.find_element_by_xpath(
 		read_xpath(bypass_suspicious_login.__name__, "submit_security_code_button"))
 
@@ -360,9 +345,6 @@ def bypass_suspicious_login(browser, bypass_with_mobile):
 	 .move_to_element(submit_security_code_button)
 	 .click()
 	 .perform())
-
-	# update server calls
-	# update_activity()
 
 	try:
 		sleep(5)
@@ -433,9 +415,6 @@ def click_element(browser, element, tryNum=0):
 		# use Selenium's built in click function
 		element.click()
 
-	# update server calls after a successful click by selenium
-	# update_activity()
-
 	except Exception:
 		# click attempt failed
 		# try something funky and try again
@@ -467,9 +446,6 @@ def click_element(browser, element, tryNum=0):
 			# update_activity()
 			# end condition for the recursive function
 			return
-
-		# update server calls after the scroll(s) in 0, 1 and 2 attempts
-		# update_activity()
 
 		# sleep for 1 second to allow window to adjust (may or may not be
 		# needed)
@@ -565,8 +541,6 @@ def check_authorization(browser, username, method, logger, notify=True):
 		except WebDriverException:
 			try:
 				browser.execute_script("location.reload()")
-				# update_activity()
-
 				activity_counts = browser.execute_script(
 					"return window._sharedData.activity_counts")
 
@@ -600,7 +574,6 @@ def check_authorization(browser, username, method, logger, notify=True):
 def reload_webpage(browser):
 	""" Reload the current webpage """
 	browser.execute_script("location.reload()")
-	# update_activity()
 	sleep(2)
 
 	return True
@@ -630,8 +603,6 @@ def web_address_navigator(browser, link):
 		while True:
 			try:
 				browser.get(link)
-				# update server calls
-				# update_activity()
 				sleep(2)
 				break
 
@@ -685,6 +656,116 @@ def get_current_url(browser):
 			current_url = None
 
 	return current_url
+
+
+def highlight_print(username=None, message=None, priority=None, level=None,
+					logger=None):
+	""" Print headers in a highlighted style """
+	# can add other highlighters at other priorities enriching this function
+
+	# find the number of chars needed off the length of the logger message
+	output_len = (28 + len(username) + 3 + len(message) if logger
+				  else len(message))
+	show_logs = True
+
+	if priority in ["initialization", "end"]:
+		# OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+		# E.g.:          Driver started!
+		# oooooooooooooooooooooooooooooooooooooooooooooooo
+		upper_char = "O"
+		lower_char = "o"
+
+	elif priority == "login":
+		# ................................................
+		# E.g.:        Logged in successfully!
+		# ''''''''''''''''''''''''''''''''''''''''''''''''
+		upper_char = "."
+		lower_char = "'"
+
+	elif priority == "feature":  # feature highlighter
+		# ________________________________________________
+		# E.g.:    Starting to interact by users..
+		# """"""""""""""""""""""""""""""""""""""""""""""""
+		upper_char = "_"
+		lower_char = "\""
+
+	elif priority == "user iteration":
+		# ::::::::::::::::::::::::::::::::::::::::::::::::
+		# E.g.:            User: [1/4]
+		upper_char = ":"
+		lower_char = None
+
+	elif priority == "post iteration":
+		# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		# E.g.:            Post: [2/10]
+		upper_char = "~"
+		lower_char = None
+
+	elif priority == "workspace":
+		# ._. ._. ._. ._. ._. ._. ._. ._. ._. ._. ._. ._.
+		upper_char = " ._. "
+		lower_char = None
+
+	if (upper_char
+			and (show_logs
+				 or priority == "workspace")):
+		print("\n{}".format(
+			upper_char * int(ceil(output_len / len(upper_char)))))
+
+	if level == "info":
+		if logger:
+			logger.info(message)
+		else:
+			print(message)
+
+	elif level == "warning":
+		if logger:
+			logger.warning(message)
+		else:
+			print(message)
+
+	elif level == "critical":
+		if logger:
+			logger.critical(message)
+		else:
+			print(message)
+
+	if (lower_char
+			and (show_logs
+				 or priority == "workspace")):
+		print("{}".format(
+			lower_char * int(ceil(output_len / len(lower_char)))))
+
+
+def get_logfolder(username, multi_logs, log_location):
+	if multi_logs:
+		logfolder = "{0}{1}{2}{1}".format(log_location,
+										  os.path.sep,
+										  username)
+	else:
+		logfolder = (log_location + os.path.sep)
+
+	validate_path(logfolder)
+	return logfolder
+
+
+def validate_path(path):
+	""" Make sure the given path exists """
+
+	if not os.path.exists(path):
+		try:
+			os.makedirs(path)
+
+		except OSError as exc:
+			exc_name = type(exc).__name__
+			msg = ("{} occured while making \"{}\" path!"
+				   "\n\t{}".format(exc_name,
+								   path,
+								   str(exc).encode("utf-8")))
+
+
+def read_xpath(function_name, xpath_name):
+	return xpath[function_name][xpath_name]
 
 
 def create_proxy_extension(proxy):
@@ -761,114 +842,3 @@ def create_proxy_extension(proxy):
 		zp.writestr("background.js", background_js)
 
 	return pluginfile
-
-
-def highlight_print(username=None, message=None, priority=None, level=None,
-					logger=None):
-	""" Print headers in a highlighted style """
-	# can add other highlighters at other priorities enriching this function
-
-	# find the number of chars needed off the length of the logger message
-	output_len = (28 + len(username) + 3 + len(message) if logger
-				  else len(message))
-	show_logs = True
-
-	if priority in ["initialization", "end"]:
-		# OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-		# E.g.:          Driver started!
-		# oooooooooooooooooooooooooooooooooooooooooooooooo
-		upper_char = "O"
-		lower_char = "o"
-
-	elif priority == "login":
-		# ................................................
-		# E.g.:        Logged in successfully!
-		# ''''''''''''''''''''''''''''''''''''''''''''''''
-		upper_char = "."
-		lower_char = "'"
-
-	elif priority == "feature":  # feature highlighter
-		# ________________________________________________
-		# E.g.:    Starting to interact by users..
-		# """"""""""""""""""""""""""""""""""""""""""""""""
-		upper_char = "_"
-		lower_char = "\""
-
-	elif priority == "user iteration":
-		# ::::::::::::::::::::::::::::::::::::::::::::::::
-		# E.g.:            User: [1/4]
-		upper_char = ":"
-		lower_char = None
-
-	elif priority == "post iteration":
-		# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		# E.g.:            Post: [2/10]
-		upper_char = "~"
-		lower_char = None
-
-	elif priority == "workspace":
-		# ._. ._. ._. ._. ._. ._. ._. ._. ._. ._. ._. ._.
-		# E.g.: |> Workspace in use: "C:/Users/El/InstaPy"
-		upper_char = " ._. "
-		lower_char = None
-
-	if (upper_char
-			and (show_logs
-				 or priority == "workspace")):
-		print("\n{}".format(
-			upper_char * int(ceil(output_len / len(upper_char)))))
-
-	if level == "info":
-		if logger:
-			logger.info(message)
-		else:
-			print(message)
-
-	elif level == "warning":
-		if logger:
-			logger.warning(message)
-		else:
-			print(message)
-
-	elif level == "critical":
-		if logger:
-			logger.critical(message)
-		else:
-			print(message)
-
-	if (lower_char
-			and (show_logs
-				 or priority == "workspace")):
-		print("{}".format(
-			lower_char * int(ceil(output_len / len(lower_char)))))
-
-
-def get_logfolder(username, multi_logs, log_location):
-	if multi_logs:
-		logfolder = "{0}{1}{2}{1}".format(log_location,
-										  os.path.sep,
-										  username)
-	else:
-		logfolder = (log_location + os.path.sep)
-
-	validate_path(logfolder)
-	return logfolder
-
-
-def validate_path(path):
-	""" Make sure the given path exists """
-
-	if not os.path.exists(path):
-		try:
-			os.makedirs(path)
-
-		except OSError as exc:
-			exc_name = type(exc).__name__
-			msg = ("{} occured while making \"{}\" path!"
-				   "\n\t{}".format(exc_name,
-								   path,
-								   str(exc).encode("utf-8")))
-
-
-def read_xpath(function_name, xpath_name):
-	return xpath[function_name][xpath_name]
