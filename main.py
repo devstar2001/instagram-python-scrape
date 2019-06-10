@@ -49,5 +49,22 @@ if __name__ == '__main__':
 							"login",
 							"info",
 							logger)
+		# -------- login result messages(log_status) --------
+		# 0	Logged in successfully!
+		# 1	Suspicious Login Attempt
+		# 2	Sorry, your password was incorrect. Please double-check your password.
+		# 3	The username you entered doesn't belong to an account. Please check your username and try again.
+		# 4	unknown login error
+
+		if 'Logged' in message:
+			log_status = 0
+		elif 'Attempt' in message:
+			log_status = 1
+		elif 'your password' in message:
+			log_status = 2
+		elif 'your username' in message:
+			log_status = 3
+		else:
+			log_status = 4
 
 		driver.close()

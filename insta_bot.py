@@ -121,12 +121,11 @@ def login_user(browser,
 	login_submit_result_msg = ''
 	ig_homepage = "https://www.instagram.com"
 	web_address_navigator(browser, ig_homepage)
+	logfolder = get_logfolder(username, True, log_location)
 	cookie_loaded = False
-
+	cookie_file = '{0}{1}_cookie.pkl'.format(logfolder, username)
 	# try to load cookie from username
 	try:
-		logfolder = get_logfolder(username, True, log_location)
-		cookie_file = '{0}{1}_cookie.pkl'.format(logfolder, username)
 		for cookie in pickle.load(open(cookie_file, 'rb')):
 			browser.add_cookie(cookie)
 			cookie_loaded = True
@@ -136,6 +135,8 @@ def login_user(browser,
 	# force refresh after cookie load or check_authorization() will FAIL
 	reload_webpage(browser)
 
+	# wait until page fully load
+	explicit_wait(browser, "PFL", [], logger, 5)
 	# cookie has been LOADED, so the user SHOULD be logged in
 	# check if the user IS logged in
 	login_state = check_authorization(browser,
@@ -176,13 +177,6 @@ def login_user(browser,
 		except MoveTargetOutOfBoundsException:
 			login_elem.click()
 
-	# update server calls
-	# update_activity()
-
-	# Enter username and password and logs the user in
-	# Sometimes the element name isn't 'Username' and 'Password'
-	# (valid for placeholder too)
-
 	# wait until it navigates to the login page
 	login_page_title = "Login"
 	explicit_wait(browser, "TC", login_page_title, logger)
@@ -222,32 +216,35 @@ def login_user(browser,
 	 .send_keys(Keys.ENTER)
 	 .perform())
 
-	# check P tag id='slfErrorAlert' and then get its value
-	login_submit_result = browser.find_elements_by_xpath(
-		read_xpath(login_user.__name__, 'login_submit_result'))
-	if login_submit_result:
-		login_submit_result_msg = login_submit_result[0].text.replace('\n', '')
-		return False, login_submit_result_msg
-
-	# dismiss_get_app_offer(browser, logger)    # when try to log in with mobile
-	dismiss_notification_offer(browser, logger)
-
-	if bypass_suspicious_attempt is True:
-		bypass_suspicious_login(browser, bypass_with_mobile)
-
 	# wait until page fully load
 	explicit_wait(browser, "PFL", [], logger, 5)
 
-	# Check if user is logged-in (If there's two 'nav' elements)
-	nav = browser.find_elements_by_xpath(read_xpath(login_user.__name__, "nav"))
-	if len(nav) == 2:
+	login_state = check_authorization(browser,
+									  username,
+									  "activity counts",
+									  logger,
+									  False)
+	if login_state is True:
+		# dismiss_get_app_offer(browser, logger)    # when try to log in with mobile
+		dismiss_notification_offer(browser, logger)
+		if bypass_suspicious_attempt is True:
+			bypass_suspicious_login(browser, bypass_with_mobile)
+
 		# create cookie for username
 		pickle.dump(browser.get_cookies(), open(cookie_file, 'wb'))
 		print('Cookie for username saved.')
 		return True, login_submit_result_msg
-	else:
 
-		return False, login_submit_result_msg
+	else:
+		# To get failed reason, check if P tag id='slfErrorAlert' exists and then get its value
+		login_submit_result = browser.find_elements_by_xpath(
+			read_xpath(login_user.__name__, 'login_submit_result'))
+		if login_submit_result:
+			login_submit_result_msg = login_submit_result[0].text.replace('\n', '')
+			return False, login_submit_result_msg
+		else:
+			login_submit_result_msg = 'unknown login error'
+			return False, login_submit_result_msg
 
 
 def bypass_suspicious_login(browser, bypass_with_mobile):
